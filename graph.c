@@ -218,3 +218,92 @@ void BFS(MGraph Graph, Vertex S, void(*Visit)(Vertex)){
 		}
 	}
 }
+
+
+//最短路径Dijkstra算法 
+Vertex FindMinDist(MGraph Graph, int dist[], int collocted[]){
+	//返回未被收录定点中的最小者
+	Vertex MinV, V;
+	int MinDist = INFINITY;
+	
+	for(V=0; V<Graph->Nv; V++){
+		if(collected[V]==false &&dist[V]<MinDist){
+			MinDist = Dist[V];
+			MinV = V;
+		}
+	}
+	if(MinDist<INFINITY){
+		return MinV;
+	}
+	else{
+		return ERROR;
+	}
+}
+
+bool Dijkstra(MGraph Graph, int dist[], int path[], Vertex S){
+	int colloected[MaxVertexNum];
+	Vertex V, W;
+	
+	//初始化
+	for(V=0; V<Graph->Nv; V++){
+		dist[V] = Graph->G[S][V];
+		path[V] = -1;
+		collected[V] = false;
+	} 
+	
+	//起点收进集合
+	dist[S] = 0;
+	collected[S] = true;
+	
+	while(1){
+		//V=未收入顶点中dist最小者
+		V = FindMinDist(Graph, dist, collected) ;
+		if(V==ERROR){
+			break; //若这样的V不存在，算法结束 
+		}
+	} 
+	collected[V] = true;
+	for(W=0; W<Graph->Nv; W++){
+		//若W是V的邻接点并且未收录
+		if(collected[W]==false && Graph->G[V][W]<INFINITY){
+			if(Graph->G[V][W]<0){
+				return false; //若有负边，返回错误 
+			}
+			if(dist[V]+Graph[V][W] < dist[W]){
+				//若收录V使得dist[W]变小 
+				dist[W] = dist[V] + Graph->G[V][W]；
+				path[W] = V; 
+			}
+		} 
+	} 
+	return true;
+}
+
+
+//Floyd算法
+bool Floyd(MGraph Graph, WeightType D[][MaxVertexNum], Vertex path[][MaxVertexNum]){
+	Vertex i, j, k;
+	
+	//初始化
+	for(i=0; i<Graph->Nv; i++){
+		for(j=0; j<Graph->Nv; j++){
+			D[i][j] = Graph->G[i][j];
+			path[i][j] = -1;
+		}
+	} 
+	
+	for(k=0; k<Graph->Nv; k++){
+		for(i=0; i<Graph->Nv; i++){
+			for(j=0; j<Graph->Nv; j++){
+				if(D[i][k]+D[k][j]<D[[i][j]){
+					D[i][j] = D[i][k]+D[i][j];
+					if(i==j && D[i][j]<0){
+						return false;
+					} 
+					path[i][j] = k;
+				}
+			}
+		}
+	}
+	return true;
+} 
