@@ -309,4 +309,218 @@ bool Floyd(MGraph Graph, WeightType D[][MaxVertexNum], Vertex path[][MaxVertexNu
 } 
 
 
+//邻接矩阵储存图的Prim算法
+#define ERROR -1
 
+int Prim(MGraph Graph, LGraph MST){
+	//将最小生成树保存为邻接表的图MST，返回最小权重值
+	WeightType dist[MaxVertexNum], TotalWeight;
+	Vertex parent[MaxVertexNum], V, W;
+	int VCount;
+	Edge E;
+	
+	//初始化，默认初始点下标为0
+	for(V=0; V<Graph->Nv; V++){
+		//若无边这定义为INFINITY
+		dist[V] = Graph->G[0][V];
+		parent[V] = 0; //定义所有父节点都是0 
+	} 
+	TotalWeight = 0; //初始化权重和
+	VCount = 0;  //初始化收录的顶点数
+	
+	//创建包含所有顶点但没有边的图，邻接表版本
+	MST = CreateGraph(Graph->Nv);
+	E = (Edge)malloc(sizeof(struct ENode)); //建立空的边节点
+	
+	//将初始点0收录进MST
+	dist[0] = 0;
+	VCount++;
+	parent[0] = -1; //树根 
+	
+	while(1){
+		V = FindMinDist(Graph, Dist);
+		//V=未收录顶点中dist最小者
+		if(V==ERROR){
+			break;//若这样的V不存在，算法结束 
+		} 
+		
+		//将V及相应的边<parent[V],V>收录进MST
+		E->V1 = parent[V];
+		E->V2 = V;
+		E->Weight = dist[V];
+		InsertEdge(MST, E);
+		TotalWeight += dist[V];
+		dist[V] = 0;
+		VCount++;
+		
+		for(W=0; W<Graph->Nv; W++){
+			if(dist[W]!=0 && Graph->G[V][W]<INFINTY){
+				//若W是V的临界点并且未被收录
+				if(Graph->G[V][W]<dist[W]){
+					//若收录V使得dist[W]变小
+					dist[W] = Graph->G[V][W];
+					parent[W] = V; 
+				} 
+			}
+		} 
+	} 
+	if(VCount < Graph->Nv){
+		TotalWeight = ERROR;
+	}
+	
+	return TotalWeight;
+} 
+
+
+//Kruskal算法的伪代码
+int Kruskal(LGraph Graph, LGraph MST){
+	//将最小生成树保存为邻接表储存的图MST，返回最小权重和
+	MST = 包含所有顶点但没有边的图
+	while(MST中收集的边不到Graph->Nv-1条 && 原图的边集E非空){
+		从E中选择最小代价边(V, W)；//引入最小堆完成
+		从E中删除该边(V，W)
+		if((V, w)的选取不在MST中构成回路) //此判断由并查集的find完成 
+			将(V, W)加入MST；//此步由并查集的Union完成
+		else
+			彻底丢弃(V, W) 
+	} 
+	if(MST中收集的边不到Graph->Nv-1条)
+		return ERROR;
+	else
+		return 最小权重和; 
+} 
+
+
+//拓扑排序算法伪代码
+bool TopSort(Graph Graph, Vertex TopOrder[]){
+	//对graph进行拓扑排序，TopOrder顺序储存排序后的顶点下标
+	
+	//遍历图，得到各顶点的入度Indergree[]
+	for(cnt=0; cnt<Graph->Nv; cnt++){
+		V = 为输出的入度为0的顶点;
+		if(这样的V不存在){
+			printf("图中有回路");
+			break;
+		} 
+		TopOrder[cnt] = V; //将V存为结果序列的下一个元素
+		//将V及其出边从图中删除
+		for(V的每个邻接点W){
+			Indegree--; 
+		} 
+	} 
+	if(cnt != Graph->Nv){
+		return false; //说明图中有回路，返回错误 
+	}
+	else{
+		return true;
+	}
+} 
+
+//改进后的拓扑排序算法
+bool TopSort(LGraph Graph, Vertex TopOrder[]) {
+	//对graph进行拓扑排序，TopOrder顺序储存排序后的顶点下标
+	int Indegree[MaxVertexNum], cnt;
+	Vertex V;
+	PtrToAdjVNode W;
+	Queue Q = CreateQueue(Graph->Nv);
+	
+	//初始化Indegree[]
+	for(V=0; V<Graph->Nv; V++){
+		Indegree[V] = 0;
+	} 
+	
+	//遍历图，得到Indegree[]
+	for(V=0; V<Graph->Nv; V++){
+		for(W=Graph->G[V].FirstEdge; W; W=W->Next){
+			Indegree[W->AdjV]++; //对有向边<V， W->AdjV>累计终点的入度 
+		}
+	}
+	
+	//将所有入度为0的顶点入列
+	for(V=0; V<Graph->Nv; V++){
+		if(Indegree[V]==0){
+			AddQ(Q, V);
+		}
+	} 
+	
+	//下面进入拓扑排序
+	cnt = 0;
+	while(!IsEmpty(Q)){
+		V = DeleteQ(Q); //弹出一个入度为0的顶点
+		TopOrder[cnt++] = V; //将其存为结果序列的下一个元素
+		//对V的每个邻接点W->AdjV;
+		for(W=Graph->G[V].FirstEdge; W; W=W->Next){
+			if(--Indegree[W->AdjV]==0){
+				//若删除V使得W->AdjV入度为零,则该顶点入列 
+				AddQ(Q, W->AdjV); 
+			}
+		} 
+	} 
+	
+	if(cnt != Graph->Nv){
+		return false;
+	} 
+	else{
+		return true;
+	}
+}
+
+
+//统计路径长度不超过6的定点数比例（六度空间）
+#define SIX 6
+int Visited[MaxVertexNum];
+
+void InitializeVisited(int Nv){
+	Vertex V;
+	for(V=0; V<Nv; V++){
+		Visited[V] = false;
+	}
+} 
+
+int SDS_BFS(LGraph Graph, Vertex S){
+	//以S为出发点对Graph进行6层BFS搜索
+	Queue Q;
+	Vertex V, Last, Tail;
+	PtrToAdjVNode W;
+	int Count, Level;
+	
+	Q = CreateQueue(MaxSize); //创建空队列
+	Visited[S] = true; //标记S已访问
+	Count = 1; //统计人数从1开始
+	Level = 0; //起始点定义为0层
+	Last = S;  //该层只有S一个顶点，是该层被访问的最后一个顶点
+	AddQ(Q, S);//S入队列
+	
+	while(!IsEmpty(Q)) {
+		V = DeleteQ(Q); //弹出V
+		for(W=Graph->G[V].FirstEdge; W; W=W->Next){ //访问V的每个邻接点 
+			if(!Visited[W->AdjV]){  //若邻接点未被访问 
+				Visited[W->AdjV] = true; //标记访问 
+				Count++;               //统计人数
+				Tail = W->AdjV;      //当前层尾
+				AddQ(Q, W->AdjV);   //该邻接点入队列 
+			}
+		}
+		if(V==Last){ //如果上一层的最后一个顶点弹出 
+			Level++; //层数递增 
+			Last = Tail; //更新当前层尾作为被访问的最后一个顶点 
+		} 
+		if(Level==SIX){
+			break;
+		}
+	}
+	DestroyQueue(Q);
+	return Count;
+}
+
+void Six_Degrees_of_Separation(LGraph Graph){
+	//用邻接表储存图，对每个顶点检验六度空间理论
+	Vertex V;
+	int count;
+	
+	for(V=0; V<Graph->Nv; V++){
+		InitializeVisited(Graph->Nv);
+		count = SDS_BFS(Graph, V);
+		printf("顶点%d的六度覆盖比例=%.2f%%\n", V, 100.0*(double)count/(double)Graph->Nv);
+	} 
+} 
