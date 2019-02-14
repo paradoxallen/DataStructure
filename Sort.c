@@ -173,3 +173,149 @@ void MergeSort(ElementType A[], int N){
 		printf("空间不足。"); 
 	}
 }
+
+
+//快速排序
+ElementType Median3(ElementType A[], int Left, int Right){
+	int Center = (Left+Right)/2;
+	if(A[Left])>A[Right]){
+		Swap(&A[Left], &A[Right]);
+	}
+	if(A[Left]>A[Center]){
+		Swap(&A[Left], &A[Center]);
+	}
+	if(A[Center]>A[Right]){
+		Swap(&A[Center], &A[Right]);
+	}
+	//此时A[Left]<=A[Center]<=A[Right]
+	Swap(&A[Center], &A[Right-1]);  //将基准Pivot藏到右边
+	//只需考虑A[Left+1],A[Right-2] 
+	return A[Right-1]; //返回基准值 
+} 
+
+void Qsort(ElementType A[], int Left, int Right){
+	//核心递归函数
+	int Pivot, Cutoff, Low, High;
+	
+	if(Cutoff<=Right-Left){
+		//如果序列元素充分多，进入快排
+		Pivot = Median3(A, Left, Right);
+		Low = Left;
+		High = Right-1;
+		while(1){
+			//将序列中比基准小的移到基准左边，大的移到右边
+			while(A[++Low]<Pivot);
+			while(A[--High]>Pivot);
+			if(Low<High){
+				Swap(&A[Low], &A[High]);
+			} 
+			else{
+				break;
+			}
+		} 
+		Swap(&A[Low], &A[Right-1]); //将基准换到正确的位置
+		Qsort(A, Left, Low-1);
+		Qsort(A, Low+1, Right); 
+	} 
+	else{
+		InsertionSort(A+Left, Right-Left+1);  //元素太少，用简单排序 
+	}
+}
+
+void QucikSort(ElementType A[],  int N){
+	//统一接口；
+	Qsort(A, 0, N-1); 
+} 
+
+
+//次位优先的基数排序算法
+//假设元素最多有MaxDigit个关键字，基数全是同样的Radix(进位） 
+#define MaxDigit 4
+#define Radix 10
+
+//桶元素结点
+typedef struct Node *PtrToNode;
+struct Node{
+	int key;
+	PtrToNode next;
+}; 
+
+//桶头结点
+struct HeadNode{
+	PtrToNode head, tail;
+}; 
+typedef struct HeadNode Bucket[Radix];
+
+int GetDigit(int X, int D){
+	//返回整型关键字X的第D位数字 
+	//默认次位D=1，主位D<=MaxDigit
+	int d, i;
+	
+	for(i=1; i<=D; i++){
+		d = X%Radix;
+		X /= Radix;
+	} 
+	return d;
+}
+
+void LSDRadixSort(ElementType A[], int N){
+	//基数排序，次位优先
+	int D, Di, i;
+	Bucket B;
+	PtrToNode tmp, p, List = NULL;
+	
+	for(i=0; i<Radix; i++){
+		//初始化每个桶为空链表
+		B[i].head = B[i].tail = NULL; 
+	} 
+	for(i=0; i<N; i++){
+		//将原始序列逆序存入初始链表List
+		tmp = (PtrToNode)malloc(sizeof(struct Node));
+		tmp->key = A[i];
+		tmp->next = List;
+		List = tmp; 
+	}
+	
+	//下面开始排序
+	for (D=1; D<MaxDight; D++){
+		//对数据的每一位循环处理
+		//下面是分配过程
+		p = List;
+		while(p){
+			Di = GetDight(p->Key, D);  //获得当前元素的当前位数字
+			tmp = p; p=p->next;  //从list中摘除
+			tmp->next = NULL;  
+			//插入B[Di]号桶 
+			if(B[Di].head==NULL){
+				B[Di].head = B[Di].tail = tmp; 
+			} 
+			else{
+				B[Di].tail->next = tmp;
+				B[Di].tail = tmp;
+			}
+		} 
+		
+		//下面是收集的过程
+		for(Di=Radix-1; Di>=0; Di--){
+			//将每个桶的元素顺序收集入List
+			if(B[Di].head){
+				//如果桶不为空
+				//整桶插入List表头
+				B[Di].tail->next = List;
+				List = B[Di].head;
+				B[Di].head = B[Di].tail = NULL; //清空桶 
+			} 
+		} 
+	}
+	
+	//将List倒入A[]并释放空间
+	for(i=0; i<N; i++){
+		tmp = List;
+		List = List->next;
+		A[i] = Tmp->key;
+		free(tmp);
+	} 
+} 
+
+
+
