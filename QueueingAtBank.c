@@ -1,6 +1,6 @@
 //银行排队问题
 
-//1.单队列多窗口服务
+//1.单队列多窗口服务：银行有K个窗口提供服务，所有顾客按到达时间排队，当有窗口空闲时，下一位顾客即去该窗口处理事务 
 //单队列多窗口服务模拟队列定义
 typedef struct People ElementType;
 struct People{
@@ -161,7 +161,8 @@ int FindNextWindow(int W[], int K, int *WaitTime){
 } 
 
 
-//2.单队列多窗口+VIP服务
+//2.单队列多窗口+VIP服务：当队列没有VIP客户时，VIP窗口为普通顾客服务；当VIP窗口空闲且队列中有VIP客户等待时，排在最前面的VIP客户享受该窗口的服务。
+//同时，当轮到某VIP窗口出列时，若VIP窗口非空，该客户可以选择空闲的普通窗口 
 //单队列多窗口+VIP服务模拟队列定义
 typedef struct People ElementType;
 struct People{
